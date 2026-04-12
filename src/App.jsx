@@ -10,11 +10,14 @@ const authInitialState = {
   password: '',
 }
 
+const FUEL_TYPES = ['Petrol', 'Diesel', 'LPG', 'Electric', 'Hybrid', 'Plug-in Hybrid', 'CNG', 'Hydrogen']
+
 const carInitialState = {
   name: '',
   make: '',
   model: '',
   tankCapacity: '',
+  fuelType: '',
 }
 
 const getDefaultDateTime = () => {
@@ -414,6 +417,7 @@ function App() {
       make: carForm.make.trim() || null,
       model: carForm.model.trim() || null,
       tank_capacity_liters: carForm.tankCapacity ? Number(carForm.tankCapacity) : null,
+      fuel_type: carForm.fuelType || null,
     }
 
     const { data, error } = await supabase
@@ -693,6 +697,7 @@ function App() {
                       <span className="car-name">{car.name}</span>
                       <span className="car-meta">
                         {[car.make, car.model].filter(Boolean).join(' ')}
+                        {car.fuel_type ? ` · ${car.fuel_type}` : ''}
                       </span>
                       <span className="car-stat">
                         Avg: {formatNumber(metrics?.averageEconomy)} l/100 km
@@ -824,22 +829,38 @@ function App() {
             </label>
           </div>
 
-          <label className="field">
-            <span>Tank capacity (liters)</span>
-            <input
-              type="number"
-              min="0"
-              step="0.1"
-              value={carForm.tankCapacity}
-              onChange={(event) =>
-                setCarForm((currentValue) => ({
-                  ...currentValue,
-                  tankCapacity: event.target.value,
-                }))
-              }
-              placeholder="55"
-            />
-          </label>
+          <div className="field-row">
+            <label className="field">
+              <span>Tank capacity (liters)</span>
+              <input
+                type="number"
+                min="0"
+                step="0.1"
+                value={carForm.tankCapacity}
+                onChange={(event) =>
+                  setCarForm((currentValue) => ({
+                    ...currentValue,
+                    tankCapacity: event.target.value,
+                  }))
+                }
+                placeholder="55"
+              />
+            </label>
+            <label className="field">
+              <span>Fuel type</span>
+              <select
+                value={carForm.fuelType}
+                onChange={(event) =>
+                  setCarForm((currentValue) => ({ ...currentValue, fuelType: event.target.value }))
+                }
+              >
+                <option value="">Select…</option>
+                {FUEL_TYPES.map((ft) => (
+                  <option key={ft} value={ft}>{ft}</option>
+                ))}
+              </select>
+            </label>
+          </div>
 
           <button className="primary-button" type="submit" disabled={Boolean(busyAction)}>
             Save car

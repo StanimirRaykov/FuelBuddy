@@ -48,6 +48,7 @@ create table if not exists public.cars (
   make text,
   model text,
   tank_capacity_liters numeric(8, 2),
+  fuel_type            text,
   created_at timestamptz not null default timezone('utc', now())
 );
 
