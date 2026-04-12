@@ -185,7 +185,7 @@ function Modal({ title, onClose, children }) {
   )
 }
 
-function AppNav({ title, darkMode, onToggleDark, session, onSignOut, busyAction }) {
+function AppNav({ title, darkMode, onToggleDark, session, onSignOut, busyAction, onOpenProfile }) {
   return (
     <header className="app-nav">
       <div className="nav-inner">
@@ -207,6 +207,15 @@ function AppNav({ title, darkMode, onToggleDark, session, onSignOut, busyAction 
               <span className="nav-email" title={session.user.email}>
                 {session.user.email}
               </span>
+              <button
+                type="button"
+                className="icon-button"
+                onClick={onOpenProfile}
+                aria-label="Profile settings"
+                title="Profile settings"
+              >
+                👤
+              </button>
               <button
                 type="button"
                 className="secondary-button nav-signout"
@@ -238,6 +247,11 @@ function App() {
   const [darkMode, setDarkMode] = useState(getInitialDarkMode)
   const [showAddCar, setShowAddCar] = useState(false)
   const [showAddRefill, setShowAddRefill] = useState(false)
+  const [editCar, setEditCar] = useState(null)
+  const [editRefill, setEditRefill] = useState(null)
+  const [showProfile, setShowProfile] = useState(false)
+  const [profile, setProfile] = useState(null)
+  const [profileForm, setProfileForm] = useState({ displayName: '', newPassword: '' })
 
   const toggleDark = () =>
     setDarkMode((prev) => {
@@ -295,11 +309,15 @@ function App() {
     const loadData = async () => {
       setBusyAction('Loading your garage...')
 
-      const [{ data: carsData, error: carsError }, { data: refillsData, error: refillsError }] =
-        await Promise.all([
-          supabase.from('cars').select('*').order('created_at', { ascending: false }),
-          supabase.from('refills').select('*').order('filled_at', { ascending: false }),
-        ])
+      const [
+        { data: carsData, error: carsError },
+        { data: refillsData, error: refillsError },
+        { data: profileData },
+      ] = await Promise.all([
+        supabase.from('cars').select('*').order('created_at', { ascending: false }),
+        supabase.from('refills').select('*').order('filled_at', { ascending: false }),
+        supabase.from('profiles').select('*').eq('id', session.user.id).maybeSingle(),
+      ])
 
       if (carsError) {
         setNotice({ type: 'error', text: carsError.message })
@@ -315,6 +333,10 @@ function App() {
 
       setCars(carsData)
       setRefills(refillsData)
+      if (profileData) {
+        setProfile(profileData)
+        setProfileForm((f) => ({ ...f, displayName: profileData.display_name ?? '' }))
+      }
       setSelectedCarId((currentValue) => {
         if (currentValue && carsData.some((car) => car.id === currentValue)) {
           return currentValue
@@ -509,6 +531,152 @@ function App() {
     setBusyAction('')
   }
 
+  const handleUpdateCar = async (event) => {
+    event.preventDefault()
+    if (!session || !supabase || !editCar) return
+
+    setBusyAction('Saving changes...')
+    setNotice(null)
+
+    const { data, error } = await supabase
+      .from('cars')
+      .update({
+        name: carForm.name.trim(),
+        make: carForm.make.trim() || null,
+        model: carForm.model.trim() || null,
+        tank_capacity_liters: carForm.tankCapacity ? Number(carForm.tankCapacity) : null,
+        fuel_type: carForm.fuelType || null,
+      })
+      .eq('id', editCar.id)
+      .select('*')
+      .single()
+
+    if (error) {
+      setNotice({ type: 'error', text: error.message })
+      setBusyAction('')
+      return
+    }
+
+    setCars((current) => current.map((c) => (c.id === data.id ? data : c)))
+    setEditCar(null)
+    setCarForm(carInitialState)
+    setNotice({ type: 'success', text: `${data.name} updated.` })
+    setBusyAction('')
+  }
+
+  const handleDeleteCar = async (car) => {
+    if (!window.confirm(`Delete "${car.name}" and all its refills? This cannot be undone.`)) return
+    if (!session || !supabase) return
+
+    setBusyAction('Deleting car...')
+    setNotice(null)
+
+    await supabase.from('refills').delete().eq('car_id', car.id)
+    const { error } = await supabase.from('cars').delete().eq('id', car.id)
+
+    if (error) {
+      setNotice({ type: 'error', text: error.message })
+      setBusyAction('')
+      return
+    }
+
+    setCars((current) => current.filter((c) => c.id !== car.id))
+    setRefills((current) => current.filter((r) => r.car_id !== car.id))
+    setSelectedCarId((current) => (current === car.id ? '' : current))
+    setNotice({ type: 'success', text: `${car.name} deleted.` })
+    setBusyAction('')
+  }
+
+  const handleUpdateRefill = async (event) => {
+    event.preventDefault()
+    if (!session || !supabase || !editRefill) return
+
+    setBusyAction('Saving changes...')
+    setNotice(null)
+
+    const { data, error } = await supabase
+      .from('refills')
+      .update({
+        odometer_km: Number(refillForm.odometer),
+        fuel_price: Number(refillForm.fuelPrice),
+        fuel_amount_liters: Number(refillForm.fuelAmount),
+        fill_to_top: refillForm.fillToTop,
+        filled_at: new Date(refillForm.filledAt).toISOString(),
+      })
+      .eq('id', editRefill.id)
+      .select('*')
+      .single()
+
+    if (error) {
+      setNotice({ type: 'error', text: error.message })
+      setBusyAction('')
+      return
+    }
+
+    setRefills((current) => current.map((r) => (r.id === data.id ? data : r)))
+    setEditRefill(null)
+    setRefillForm({ ...refillInitialState, filledAt: getDefaultDateTime() })
+    setNotice({ type: 'success', text: 'Refill updated.' })
+    setBusyAction('')
+  }
+
+  const handleDeleteRefill = async (refill) => {
+    if (!window.confirm('Delete this refill? This cannot be undone.')) return
+    if (!session || !supabase) return
+
+    setBusyAction('Deleting refill...')
+    setNotice(null)
+
+    const { error } = await supabase.from('refills').delete().eq('id', refill.id)
+
+    if (error) {
+      setNotice({ type: 'error', text: error.message })
+      setBusyAction('')
+      return
+    }
+
+    setRefills((current) => current.filter((r) => r.id !== refill.id))
+    setNotice({ type: 'success', text: 'Refill deleted.' })
+    setBusyAction('')
+  }
+
+  const handleSaveProfile = async (event) => {
+    event.preventDefault()
+    if (!session || !supabase) return
+
+    setBusyAction('Saving profile...')
+    setNotice(null)
+
+    const updates = []
+
+    updates.push(
+      supabase.from('profiles').upsert({
+        id: session.user.id,
+        display_name: profileForm.displayName.trim() || null,
+        updated_at: new Date().toISOString(),
+      })
+    )
+
+    if (profileForm.newPassword) {
+      updates.push(supabase.auth.updateUser({ password: profileForm.newPassword }))
+    }
+
+    const results = await Promise.all(updates)
+    const firstError = results.find((r) => r.error)?.error
+
+    if (firstError) {
+      setNotice({ type: 'error', text: firstError.message })
+      setBusyAction('')
+      return
+    }
+
+    setProfile((p) => ({ ...p, display_name: profileForm.displayName.trim() || null }))
+    setProfileForm((f) => ({ ...f, newPassword: '' }))
+    setNotice({ type: 'success', text: 'Profile saved.' })
+    setShowProfile(false)
+    setBusyAction('')
+  }
+
   if (loading) {
     return (
       <>
@@ -536,6 +704,7 @@ function App() {
         session={session}
         onSignOut={handleSignOut}
         busyAction={busyAction}
+        onOpenProfile={() => setShowProfile(true)}
       />
       <main className="app-shell">
       <section className="card hero-card">
@@ -688,13 +857,40 @@ function App() {
                   const metrics = carMetrics[car.id]
 
                   return (
-                    <button
-                      type="button"
+                    <div
                       key={car.id}
                       className={selectedCarId === car.id ? 'car-card active' : 'car-card'}
                       onClick={() => setSelectedCarId(car.id)}
+                      role="button"
+                      tabIndex={0}
+                      onKeyDown={(e) => e.key === 'Enter' && setSelectedCarId(car.id)}
                     >
-                      <span className="car-name">{car.name}</span>
+                      <div className="car-card-top">
+                        <span className="car-name">{car.name}</span>
+                        <div className="car-card-actions" onClick={(e) => e.stopPropagation()}>
+                          <button
+                            type="button"
+                            className="card-action-btn"
+                            title="Edit car"
+                            onClick={() => {
+                              setCarForm({
+                                name: car.name,
+                                make: car.make ?? '',
+                                model: car.model ?? '',
+                                tankCapacity: car.tank_capacity_liters ?? '',
+                                fuelType: car.fuel_type ?? '',
+                              })
+                              setEditCar(car)
+                            }}
+                          >✏️</button>
+                          <button
+                            type="button"
+                            className="card-action-btn card-action-btn--danger"
+                            title="Delete car"
+                            onClick={() => handleDeleteCar(car)}
+                          >🗑️</button>
+                        </div>
+                      </div>
                       <span className="car-meta">
                         {[car.make, car.model].filter(Boolean).join(' ')}
                         {car.fuel_type ? ` · ${car.fuel_type}` : ''}
@@ -705,7 +901,7 @@ function App() {
                       <span className="car-stat">
                         Spent: {formatCurrency(metrics?.totalSpent)}
                       </span>
-                    </button>
+                    </div>
                   )
                 })}
               </div>
@@ -754,7 +950,34 @@ function App() {
                       <article key={refill.id} className="history-item">
                         <div className="history-topline">
                           <strong>{formatNumber(refill.odometer_km, 1)} km</strong>
-                          <span>{formatDate(refill.filled_at)}</span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <span>{formatDate(refill.filled_at)}</span>
+                            <button
+                              type="button"
+                              className="card-action-btn"
+                              title="Edit refill"
+                              onClick={() => {
+                                const d = new Date(refill.filled_at)
+                                const local = new Date(d - d.getTimezoneOffset() * 60000)
+                                  .toISOString().slice(0, 16)
+                                setRefillForm({
+                                  carId: refill.car_id,
+                                  odometer: refill.odometer_km,
+                                  fuelPrice: refill.fuel_price,
+                                  fuelAmount: refill.fuel_amount_liters,
+                                  fillToTop: refill.fill_to_top,
+                                  filledAt: local,
+                                })
+                                setEditRefill(refill)
+                              }}
+                            >✏️</button>
+                            <button
+                              type="button"
+                              className="card-action-btn card-action-btn--danger"
+                              title="Delete refill"
+                              onClick={() => handleDeleteRefill(refill)}
+                            >🗑️</button>
+                          </div>
                         </div>
                         <div className="history-grid">
                           <span>{formatNumber(refill.fuel_amount_liters)} L</span>
@@ -980,6 +1203,114 @@ function App() {
             disabled={Boolean(busyAction)}
           >
             Save refill
+          </button>
+        </form>
+      </Modal>
+    )}
+
+    {editCar && (
+      <Modal title={`Edit — ${editCar.name}`} onClose={() => { setEditCar(null); setCarForm(carInitialState) }}>
+        <form className="stack" onSubmit={handleUpdateCar}>
+          <label className="field">
+            <span>Car name</span>
+            <input type="text" value={carForm.name}
+              onChange={(e) => setCarForm((f) => ({ ...f, name: e.target.value }))}
+              required autoFocus />
+          </label>
+          <div className="field-row">
+            <label className="field">
+              <span>Make</span>
+              <input type="text" value={carForm.make} placeholder="Volkswagen"
+                onChange={(e) => setCarForm((f) => ({ ...f, make: e.target.value }))} />
+            </label>
+            <label className="field">
+              <span>Model</span>
+              <input type="text" value={carForm.model} placeholder="Golf"
+                onChange={(e) => setCarForm((f) => ({ ...f, model: e.target.value }))} />
+            </label>
+          </div>
+          <div className="field-row">
+            <label className="field">
+              <span>Tank capacity (L)</span>
+              <input type="number" min="0" step="0.1" value={carForm.tankCapacity} placeholder="55"
+                onChange={(e) => setCarForm((f) => ({ ...f, tankCapacity: e.target.value }))} />
+            </label>
+            <label className="field">
+              <span>Fuel type</span>
+              <select value={carForm.fuelType}
+                onChange={(e) => setCarForm((f) => ({ ...f, fuelType: e.target.value }))}>
+                <option value="">Select…</option>
+                {FUEL_TYPES.map((ft) => <option key={ft} value={ft}>{ft}</option>)}
+              </select>
+            </label>
+          </div>
+          <button className="primary-button" type="submit" disabled={Boolean(busyAction)}>
+            Save changes
+          </button>
+        </form>
+      </Modal>
+    )}
+
+    {editRefill && (
+      <Modal title="Edit refill" onClose={() => { setEditRefill(null); setRefillForm({ ...refillInitialState, filledAt: getDefaultDateTime() }) }}>
+        <form className="stack" onSubmit={handleUpdateRefill}>
+          <div className="field-row">
+            <label className="field">
+              <span>Odometer (km)</span>
+              <input type="number" min="0" step="0.1" value={refillForm.odometer} required autoFocus
+                onChange={(e) => setRefillForm((f) => ({ ...f, odometer: e.target.value }))} />
+            </label>
+            <label className="field">
+              <span>Fuel price (per L)</span>
+              <input type="number" min="0" step="0.001" value={refillForm.fuelPrice} required
+                onChange={(e) => setRefillForm((f) => ({ ...f, fuelPrice: e.target.value }))} />
+            </label>
+          </div>
+          <div className="field-row">
+            <label className="field">
+              <span>Fuel amount (L)</span>
+              <input type="number" min="0" step="0.01" value={refillForm.fuelAmount} required
+                onChange={(e) => setRefillForm((f) => ({ ...f, fuelAmount: e.target.value }))} />
+            </label>
+            <label className="field">
+              <span>Date & time</span>
+              <input type="datetime-local" value={refillForm.filledAt} required
+                onChange={(e) => setRefillForm((f) => ({ ...f, filledAt: e.target.value }))} />
+            </label>
+          </div>
+          <label className="checkbox-field">
+            <input type="checkbox" checked={refillForm.fillToTop}
+              onChange={(e) => setRefillForm((f) => ({ ...f, fillToTop: e.target.checked }))} />
+            <span>I filled the tank to the top</span>
+          </label>
+          <button className="primary-button" type="submit" disabled={Boolean(busyAction)}>
+            Save changes
+          </button>
+        </form>
+      </Modal>
+    )}
+
+    {showProfile && (
+      <Modal title="Profile settings" onClose={() => setShowProfile(false)}>
+        <form className="stack" onSubmit={handleSaveProfile}>
+          <label className="field">
+            <span>Email</span>
+            <input type="email" value={session?.user?.email ?? ''} disabled
+              style={{ opacity: 0.6, cursor: 'not-allowed' }} />
+          </label>
+          <label className="field">
+            <span>Display name</span>
+            <input type="text" value={profileForm.displayName} placeholder="Your name"
+              onChange={(e) => setProfileForm((f) => ({ ...f, displayName: e.target.value }))} />
+          </label>
+          <label className="field">
+            <span>New password <span style={{ fontWeight: 400, color: 'var(--muted)' }}>(leave blank to keep current)</span></span>
+            <input type="password" value={profileForm.newPassword} placeholder="Min. 6 characters"
+              minLength={profileForm.newPassword ? 6 : undefined}
+              onChange={(e) => setProfileForm((f) => ({ ...f, newPassword: e.target.value }))} />
+          </label>
+          <button className="primary-button" type="submit" disabled={Boolean(busyAction)}>
+            Save profile
           </button>
         </form>
       </Modal>

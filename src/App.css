@@ -382,6 +382,49 @@
 .car-meta { color: var(--muted); font-size: 0.8rem; }
 .car-stat { color: var(--text); font-size: 0.8rem; margin-top: 3px; }
 
+/* ── Car card top row (name + action buttons) ────────── */
+.car-card-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 6px;
+}
+
+.car-card-actions {
+  display: flex;
+  gap: 2px;
+  opacity: 0;
+  transition: opacity 0.15s;
+  flex-shrink: 0;
+}
+
+.car-card:hover .car-card-actions,
+.car-card.active .car-card-actions {
+  opacity: 1;
+}
+
+/* ── Inline action buttons (edit/delete on cards) ─────── */
+.card-action-btn {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  border: 1px solid var(--border);
+  background-color: var(--surface);
+  font-size: 0.75rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background-color 0.15s, border-color 0.15s;
+  padding: 0;
+}
+
+.card-action-btn:hover { background-color: var(--surface-muted); }
+
+.card-action-btn--danger:hover {
+  background-color: var(--error-bg);
+  border-color: var(--error-border);
+}
+
 /* ── Compact stats ───────────────────────────────────── */
 .hero-stats.compact {
   width: 100%;
