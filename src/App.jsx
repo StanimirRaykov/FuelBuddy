@@ -10,7 +10,7 @@ const authInitialState = {
   password: '',
 }
 
-const FUEL_TYPES = ['Petrol', 'Diesel', 'LPG', 'Electric', 'Hybrid', 'Plug-in Hybrid', 'CNG', 'Hydrogen']
+const FUEL_TYPES = ['Petrol', 'Diesel', 'LPG']
 
 const carInitialState = {
   name: '',
