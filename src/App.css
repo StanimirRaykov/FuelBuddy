@@ -572,6 +572,78 @@
   to   { opacity: 1; transform: translateY(0)    scale(1)    }
 }
 
+/* ── Confirm dialog ──────────────────────────────────── */
+.confirm-panel {
+  background-color: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-xl);
+  width: 100%;
+  max-width: 360px;
+  padding: 28px 24px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 10px;
+  box-shadow: var(--shadow-lg);
+  animation: panelIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.confirm-icon {
+  font-size: 2rem;
+  line-height: 1;
+  margin-bottom: 4px;
+}
+
+.confirm-title {
+  font-size: 1rem;
+  font-weight: 700;
+  color: var(--heading);
+  margin: 0;
+}
+
+.confirm-detail {
+  font-size: 0.85rem;
+  color: var(--muted);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.confirm-actions {
+  display: flex;
+  gap: 10px;
+  margin-top: 8px;
+  width: 100%;
+}
+
+.confirm-actions .secondary-button,
+.confirm-actions .danger-button {
+  flex: 1;
+  justify-content: center;
+}
+
+/* ── Danger button ───────────────────────────────────── */
+.danger-button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border-radius: var(--radius);
+  border: 1px solid transparent;
+  padding: 10px 20px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  background-color: #dc2626;
+  color: #fff;
+  transition: background-color 0.15s, transform 0.1s;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.danger-button:hover  { background-color: #b91c1c; transform: translateY(-1px); }
+.danger-button:active { transform: translateY(0); }
+.danger-button:disabled { opacity: 0.45; cursor: not-allowed; transform: none !important; }
+
 /* ── Desktop ─────────────────────────────────────────── */
 @media (min-width: 740px) {
   .app-shell  { padding: 28px 24px 64px; gap: 20px; }

@@ -175,11 +175,35 @@ function Modal({ title, onClose, children }) {
       <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2>{title}</h2>
-          <button type="button" className="icon-button" onClick={onClose} aria-label="Close">
-            ✕
-          </button>
+          <button type="button" className="icon-button" onClick={onClose} aria-label="Close">✕</button>
         </div>
         <div className="modal-body">{children}</div>
+      </div>
+    </div>
+  )
+}
+
+function ConfirmDialog({ message, detail, confirmLabel = 'Delete', onConfirm, onCancel }) {
+  useEffect(() => {
+    const onKey = (e) => { if (e.key === 'Escape') onCancel() }
+    document.addEventListener('keydown', onKey)
+    document.body.style.overflow = 'hidden'
+    return () => {
+      document.removeEventListener('keydown', onKey)
+      document.body.style.overflow = ''
+    }
+  }, [onCancel])
+
+  return (
+    <div className="modal-overlay" onClick={onCancel} role="alertdialog" aria-modal="true">
+      <div className="confirm-panel" onClick={(e) => e.stopPropagation()}>
+        <div className="confirm-icon">🗑️</div>
+        <h2 className="confirm-title">{message}</h2>
+        {detail && <p className="confirm-detail">{detail}</p>}
+        <div className="confirm-actions">
+          <button type="button" className="secondary-button" onClick={onCancel}>Cancel</button>
+          <button type="button" className="danger-button" onClick={onConfirm}>{confirmLabel}</button>
+        </div>
       </div>
     </div>
   )
@@ -252,6 +276,7 @@ function App() {
   const [showProfile, setShowProfile] = useState(false)
   const [profile, setProfile] = useState(null)
   const [profileForm, setProfileForm] = useState({ displayName: '', newPassword: '' })
+  const [confirmDialog, setConfirmDialog] = useState(null)
 
   const toggleDark = () =>
     setDarkMode((prev) => {
@@ -565,26 +590,25 @@ function App() {
   }
 
   const handleDeleteCar = async (car) => {
-    if (!window.confirm(`Delete "${car.name}" and all its refills? This cannot be undone.`)) return
-    if (!session || !supabase) return
-
-    setBusyAction('Deleting car...')
-    setNotice(null)
-
-    await supabase.from('refills').delete().eq('car_id', car.id)
-    const { error } = await supabase.from('cars').delete().eq('id', car.id)
-
-    if (error) {
-      setNotice({ type: 'error', text: error.message })
-      setBusyAction('')
-      return
-    }
-
-    setCars((current) => current.filter((c) => c.id !== car.id))
-    setRefills((current) => current.filter((r) => r.car_id !== car.id))
-    setSelectedCarId((current) => (current === car.id ? '' : current))
-    setNotice({ type: 'success', text: `${car.name} deleted.` })
-    setBusyAction('')
+    setConfirmDialog({
+      message: `Delete "${car.name}"?`,
+      detail: 'This will permanently delete the car and all its refill history.',
+      confirmLabel: 'Yes, delete',
+      onConfirm: async () => {
+        setConfirmDialog(null)
+        if (!session || !supabase) return
+        setBusyAction('Deleting car...')
+        setNotice(null)
+        await supabase.from('refills').delete().eq('car_id', car.id)
+        const { error } = await supabase.from('cars').delete().eq('id', car.id)
+        if (error) { setNotice({ type: 'error', text: error.message }); setBusyAction(''); return }
+        setCars((current) => current.filter((c) => c.id !== car.id))
+        setRefills((current) => current.filter((r) => r.car_id !== car.id))
+        setSelectedCarId((current) => (current === car.id ? '' : current))
+        setNotice({ type: 'success', text: `${car.name} deleted.` })
+        setBusyAction('')
+      },
+    })
   }
 
   const handleUpdateRefill = async (event) => {
@@ -621,23 +645,22 @@ function App() {
   }
 
   const handleDeleteRefill = async (refill) => {
-    if (!window.confirm('Delete this refill? This cannot be undone.')) return
-    if (!session || !supabase) return
-
-    setBusyAction('Deleting refill...')
-    setNotice(null)
-
-    const { error } = await supabase.from('refills').delete().eq('id', refill.id)
-
-    if (error) {
-      setNotice({ type: 'error', text: error.message })
-      setBusyAction('')
-      return
-    }
-
-    setRefills((current) => current.filter((r) => r.id !== refill.id))
-    setNotice({ type: 'success', text: 'Refill deleted.' })
-    setBusyAction('')
+    setConfirmDialog({
+      message: 'Delete this refill?',
+      detail: `${formatNumber(refill.odometer_km, 1)} km · ${formatNumber(refill.fuel_amount_liters)} L · ${formatDate(refill.filled_at)}`,
+      confirmLabel: 'Yes, delete',
+      onConfirm: async () => {
+        setConfirmDialog(null)
+        if (!session || !supabase) return
+        setBusyAction('Deleting refill...')
+        setNotice(null)
+        const { error } = await supabase.from('refills').delete().eq('id', refill.id)
+        if (error) { setNotice({ type: 'error', text: error.message }); setBusyAction(''); return }
+        setRefills((current) => current.filter((r) => r.id !== refill.id))
+        setNotice({ type: 'success', text: 'Refill deleted.' })
+        setBusyAction('')
+      },
+    })
   }
 
   const handleSaveProfile = async (event) => {
@@ -653,7 +676,6 @@ function App() {
       supabase.from('profiles').upsert({
         id: session.user.id,
         display_name: profileForm.displayName.trim() || null,
-        updated_at: new Date().toISOString(),
       })
     )
 
@@ -1314,6 +1336,16 @@ function App() {
           </button>
         </form>
       </Modal>
+    )}
+
+    {confirmDialog && (
+      <ConfirmDialog
+        message={confirmDialog.message}
+        detail={confirmDialog.detail}
+        confirmLabel={confirmDialog.confirmLabel}
+        onConfirm={confirmDialog.onConfirm}
+        onCancel={() => setConfirmDialog(null)}
+      />
     )}
     </>
   )
