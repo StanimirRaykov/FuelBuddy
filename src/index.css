@@ -1,145 +1,127 @@
-/* ── Light mode (default) ─────────────────────────────── */
+/* ── Design tokens — Light mode (Instrument Panel) ──── */
 :root {
   color-scheme: light;
 
-  --bg:             #f0f4f8;
-  --surface:        #ffffff;
-  --surface-raised: #ffffff;
-  --surface-muted:  #f7f9fc;
-  --input-bg:       #ffffff;
-  --border:         #dde3eb;
-  --border-focus:   #2563eb;
+  --bg:           #e4e8ec;
+  --bg-elevated:  #f2f4f7;
+  --bg-raised:    #d6dae0;
 
-  --heading:        #111827;
-  --text:           #374151;
-  --muted:          #9ca3af;
+  --fg:           #18191e;
+  --fg-muted:     #52596a;
+  --fg-dim:       #98a0b0;
 
-  --accent:         #2563eb;
-  --accent-hover:   #1d4ed8;
-  --accent-soft:    rgba(37, 99, 235, 0.08);
-  --accent-strong:  #1d4ed8;
-  --accent-outline: rgba(37, 99, 235, 0.35);
+  /* Petroleum teal — engine coolant iridescence, not amber */
+  --accent:       #006a5e;
+  --accent-dim:   #005548;
+  --accent-soft:  rgba(0, 106, 94, 0.09);
+  --accent-fg:    #ffffff;
 
-  --success-bg:     #f0fdf4;
-  --success-border: #86efac;
-  --success-text:   #166534;
+  --economy:      #1a7a40;
+  --economy-soft: rgba(26, 122, 64, 0.09);
+  --warning:      #c04010;
+  --danger:       #cc2020;
+  --danger-soft:  rgba(204, 32, 32, 0.08);
 
-  --error-bg:       #fef2f2;
-  --error-border:   #fca5a5;
-  --error-text:     #991b1b;
+  --border:       #c4cad4;
+  --border-focus: #006a5e;
+  --grid:         #cdd3de;
 
-  --economy-bg:     #eff6ff;
-  --economy-text:   #1d4ed8;
+  --shadow-sm:    0 1px 3px rgba(0, 0, 0, 0.06);
+  --shadow-md:    0 4px 8px -2px rgba(0, 0, 0, 0.10);
+  --shadow-lg:    0 12px 24px -4px rgba(0, 0, 0, 0.14);
+  --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.6);
 
-  --shadow-sm:      0 1px 2px rgba(0,0,0,.06), 0 1px 3px rgba(0,0,0,.08);
-  --shadow:         0 4px 6px -1px rgba(0,0,0,.07), 0 2px 4px -1px rgba(0,0,0,.05);
-  --shadow-lg:      0 10px 25px -3px rgba(0,0,0,.1), 0 4px 6px -2px rgba(0,0,0,.05);
-
-  --nav-bg:         rgba(255, 255, 255, 0.9);
-  --nav-border:     rgba(0, 0, 0, 0.08);
-
-  --radius-sm:   8px;
-  --radius:      12px;
-  --radius-lg:   18px;
-  --radius-xl:   24px;
+  --radius-sm:   2px;
+  --radius-md:   4px;
+  --radius-lg:   6px;
   --radius-full: 9999px;
+
+  --font-condensed: "Barlow Condensed", "Arial Narrow", sans-serif;
+  --font-mono:      "JetBrains Mono", "SF Mono", monospace;
+  --font-ui:        "Outfit", system-ui, sans-serif;
+
+  --text-xs:   clamp(0.65rem, 0.6rem + 0.25vw, 0.75rem);
+  --text-sm:   clamp(0.75rem, 0.7rem + 0.25vw, 0.875rem);
+  --text-base: clamp(0.875rem, 0.825rem + 0.25vw, 1rem);
+  --text-lg:   clamp(1rem, 0.925rem + 0.375vw, 1.125rem);
+  --text-xl:   clamp(1.25rem, 1.125rem + 0.625vw, 1.5rem);
+  --text-2xl:  clamp(1.5rem, 1.25rem + 1.25vw, 2rem);
+  --text-3xl:  clamp(2rem, 1.5rem + 2.5vw, 3rem);
+  --text-4xl:  clamp(2.5rem, 1.75rem + 3.75vw, 4rem);
+
+  --space-1:  4px;
+  --space-2:  8px;
+  --space-3:  12px;
+  --space-4:  16px;
+  --space-5:  20px;
+  --space-6:  24px;
+  --space-8:  32px;
+  --space-10: 40px;
+  --space-12: 48px;
 }
 
-/* ── Dark mode ────────────────────────────────────────── */
+/* ── Night Cluster (dark) ────────────────────────────── */
 [data-theme="dark"] {
   color-scheme: dark;
 
-  --bg:             #0d1117;
-  --surface:        #161b22;
-  --surface-raised: #1c2128;
-  --surface-muted:  #161b22;
-  --input-bg:       #1c2128;
-  --border:         #30363d;
-  --border-focus:   #58a6ff;
-
-  --heading:        #e6edf3;
-  --text:           #8d96a0;
-  --muted:          #484f58;
-
-  --accent:         #58a6ff;
-  --accent-hover:   #79b8ff;
-  --accent-soft:    rgba(88, 166, 255, 0.10);
-  --accent-strong:  #79b8ff;
-  --accent-outline: rgba(88, 166, 255, 0.40);
-
-  --success-bg:     rgba(63, 185, 80, 0.10);
-  --success-border: rgba(63, 185, 80, 0.35);
-  --success-text:   #3fb950;
-
-  --error-bg:       rgba(248, 81, 73, 0.10);
-  --error-border:   rgba(248, 81, 73, 0.35);
-  --error-text:     #f85149;
-
-  --economy-bg:     rgba(88, 166, 255, 0.10);
-  --economy-text:   #79b8ff;
-
-  --shadow-sm:      0 1px 2px rgba(0,0,0,.3), 0 1px 3px rgba(0,0,0,.4);
-  --shadow:         0 4px 6px -1px rgba(0,0,0,.4), 0 2px 4px -1px rgba(0,0,0,.3);
-  --shadow-lg:      0 10px 25px -3px rgba(0,0,0,.5), 0 4px 6px -2px rgba(0,0,0,.3);
-
-  --nav-bg:         rgba(13, 17, 23, 0.92);
-  --nav-border:     rgba(255, 255, 255, 0.07);
+  --bg:           #0a0c12;
+  --bg-elevated:  #121520;
+  --bg-raised:    #1a1f30;
+  --fg:           #dce2f0;
+  --fg-muted:     #7080a0;
+  --fg-dim:       #303850;
+  --accent:       #00c8b4;
+  --accent-dim:   #00a898;
+  --accent-soft:  rgba(0, 200, 180, 0.12);
+  --accent-fg:    #0a0c12;
+  --economy:      #30d060;
+  --economy-soft: rgba(48, 208, 96, 0.12);
+  --warning:      #ff6820;
+  --danger:       #f04040;
+  --danger-soft:  rgba(240, 64, 64, 0.12);
+  --border:       #242840;
+  --border-focus: #00c8b4;
+  --grid:         #1c2238;
+  --shadow-sm:    0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-md:    0 4px 8px -2px rgba(0, 0, 0, 0.5);
+  --shadow-lg:    0 12px 24px -4px rgba(0, 0, 0, 0.6);
+  --shadow-inset: inset 0 1px 0 rgba(255, 255, 255, 0.03);
 }
 
-/* ── Reset & Base ─────────────────────────────────────── */
+/* ── Reset & base ───────────────────────────────────────── */
 *,
 *::before,
-*::after {
-  box-sizing: border-box;
-}
+*::after { box-sizing: border-box; }
 
-html {
-  background-color: var(--bg);
-}
+html { background-color: var(--bg); }
 
 body {
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
-  font-size: 15px;
+  font-family: var(--font-ui);
+  font-size: var(--text-base);
   line-height: 1.6;
   font-weight: 400;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   background-color: var(--bg);
-  color: var(--text);
+  color: var(--fg);
 }
 
-*,
-button,
-input,
-select,
-textarea {
-  font: inherit;
-}
-
-button { cursor: pointer; }
-img    { display: block; max-width: 100%; }
-
+*, button, input, select, textarea { font: inherit; }
+button  { cursor: pointer; }
+img     { display: block; max-width: 100%; }
 h1, h2, h3, h4, p { margin: 0; }
 
-h1, h2, h3, h4 {
-  color: var(--heading);
-  line-height: 1.25;
-  font-weight: 700;
-}
+h1, h2, h3, h4 { color: var(--fg); line-height: 1.25; font-weight: 700; }
+h1 { font-size: var(--text-2xl); }
+h2 { font-size: var(--text-lg); font-weight: 600; }
+h3 { font-size: var(--text-base); }
+p  { color: var(--fg-muted); }
+a  { color: inherit; }
 
-h1 { font-size: clamp(1.5rem, 5vw, 2.2rem); }
-h2 { font-size: 1rem; }
-h3 { font-size: 0.9rem; }
+#root { min-height: 100svh; }
 
-p { color: var(--text); }
-
-a {
-  color: inherit;
-}
-
-#root {
-  min-height: 100svh;
-}
+/* ── Utilities ──────────────────────────────────────────── */
+.tabular-nums { font-variant-numeric: tabular-nums; }

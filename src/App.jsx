@@ -159,6 +159,114 @@ const getInitialDarkMode = () => {
     window.matchMedia?.('(prefers-color-scheme: dark)').matches
 }
 
+const GAUGE_MAX = 15
+const GAUGE_SEGMENTS = 20
+
+const IconEdit = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+       strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M11 4H4a2 2 0 00-2 2v14a2 2 0 002 2h14a2 2 0 002-2v-7"/>
+    <path d="M18.5 2.5a2.121 2.121 0 013 3L12 15l-4 1 1-4 9.5-9.5z"/>
+  </svg>
+)
+
+const IconDelete = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+       strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <polyline points="3 6 5 6 21 6"/>
+    <path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/>
+    <path d="M10 11v6M14 11v6"/>
+    <path d="M9 6V4a1 1 0 011-1h4a1 1 0 011 1v2"/>
+  </svg>
+)
+
+const IconClose = () => (
+  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+       strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <line x1="18" y1="6" x2="6" y2="18"/>
+    <line x1="6" y1="6" x2="18" y2="18"/>
+  </svg>
+)
+
+const IconSun = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+       strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <circle cx="12" cy="12" r="5"/>
+    <line x1="12" y1="1" x2="12" y2="3"/>
+    <line x1="12" y1="21" x2="12" y2="23"/>
+    <line x1="4.22" y1="4.22" x2="5.64" y2="5.64"/>
+    <line x1="18.36" y1="18.36" x2="19.78" y2="19.78"/>
+    <line x1="1" y1="12" x2="3" y2="12"/>
+    <line x1="21" y1="12" x2="23" y2="12"/>
+    <line x1="4.22" y1="19.78" x2="5.64" y2="18.36"/>
+    <line x1="18.36" y1="5.64" x2="19.78" y2="4.22"/>
+  </svg>
+)
+
+const IconMoon = () => (
+  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+       strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z"/>
+  </svg>
+)
+
+function getSegmentColor(index) {
+  if (index <= 6)  return '#00c870'
+  if (index <= 10) return '#f0a820'
+  if (index <= 14) return '#e05010'
+  return '#d43030'
+}
+
+function EconomyGauge({ value, size = 'md', showLabel = true }) {
+  const filled = value !== null
+    ? Math.min(Math.max(0, Math.round((value / GAUGE_MAX) * GAUGE_SEGMENTS)), GAUGE_SEGMENTS)
+    : 0
+
+  return (
+    <div
+      className={`economy-gauge economy-gauge--${size}`}
+      role="img"
+      aria-label={value !== null ? `${value.toFixed(1)} L/100km` : 'No consumption data'}
+    >
+      <div className="gauge-segments">
+        {Array.from({ length: GAUGE_SEGMENTS }, (_, i) => (
+          <span
+            key={i}
+            className={`gauge-seg${i < filled ? ' gauge-seg--filled' : ''}`}
+            style={i < filled ? {
+              backgroundColor: getSegmentColor(i),
+              animationDelay: `${i * 30}ms`,
+            } : undefined}
+          />
+        ))}
+      </div>
+      {showLabel && value !== null && (
+        <span className="gauge-label">
+          {value.toFixed(1)}<span className="gauge-unit"> L/100km</span>
+        </span>
+      )}
+    </div>
+  )
+}
+
+function TumblingNumber({ value }) {
+  const chars = String(value).split('')
+  return (
+    <span className="tumbling-number" aria-label={value}>
+      {chars.map((char, i) => (
+        <span
+          key={`${value}-${i}`}
+          className={`tumbling-char${char === '.' || char === ',' ? ' tumbling-char--punct' : ''}`}
+          style={{ animationDelay: `${i * 45}ms` }}
+          aria-hidden="true"
+        >
+          {char}
+        </span>
+      ))}
+    </span>
+  )
+}
+
 function Modal({ title, onClose, children }) {
   useEffect(() => {
     const onKey = (e) => { if (e.key === 'Escape') onClose() }
@@ -175,7 +283,7 @@ function Modal({ title, onClose, children }) {
       <div className="modal-panel" onClick={(e) => e.stopPropagation()}>
         <div className="modal-header">
           <h2>{title}</h2>
-          <button type="button" className="icon-button" onClick={onClose} aria-label="Close">✕</button>
+          <button type="button" className="icon-button" onClick={onClose} aria-label="Close"><IconClose /></button>
         </div>
         <div className="modal-body">{children}</div>
       </div>
@@ -197,34 +305,40 @@ function ConfirmDialog({ message, detail, confirmLabel = 'Delete', onConfirm, on
   return (
     <div className="modal-overlay" onClick={onCancel} role="alertdialog" aria-modal="true">
       <div className="confirm-panel" onClick={(e) => e.stopPropagation()}>
-        <div className="confirm-icon">🗑️</div>
+        <div className="confirm-icon">⚠</div>
         <h2 className="confirm-title">{message}</h2>
         {detail && <p className="confirm-detail">{detail}</p>}
         <div className="confirm-actions">
           <button type="button" className="secondary-button" onClick={onCancel}>Cancel</button>
           <button type="button" className="danger-button" onClick={onConfirm}>{confirmLabel}</button>
-        </div>
-      </div>
+        </div>      </div>
     </div>
   )
 }
 
 function AppNav({ title, darkMode, onToggleDark, session, onSignOut, busyAction, onOpenProfile }) {
+  const initials = session
+    ? (session.user.email ?? 'U').slice(0, 2).toUpperCase()
+    : null
+
   return (
     <header className="app-nav">
       <div className="nav-inner">
         <span className="nav-brand">
-          <span className="nav-logo" aria-hidden="true">⛽</span>
-          {title}
+          <svg className="nav-gauge-icon" width="14" height="16" viewBox="0 0 14 16" fill="currentColor" aria-hidden="true">
+            <path d="M7 0C7 0 1 8.2 1 11.5C1 14.04 3.686 16 7 16C10.314 16 13 14.04 13 11.5C13 8.2 7 0 7 0Z"/>
+          </svg>
+          {title.toUpperCase()}
         </span>
         <div className="nav-actions">
           <button
             type="button"
             className="icon-button"
             onClick={onToggleDark}
-            aria-label={darkMode ? 'Switch to light mode' : 'Switch to dark mode'}
+            aria-label={darkMode ? 'Switch to day mode' : 'Switch to night mode'}
+            title={darkMode ? 'Day mode' : 'Night mode'}
           >
-            {darkMode ? '☀️' : '🌙'}
+            {darkMode ? <IconSun /> : <IconMoon />}
           </button>
           {session && (
             <>
@@ -233,12 +347,12 @@ function AppNav({ title, darkMode, onToggleDark, session, onSignOut, busyAction,
               </span>
               <button
                 type="button"
-                className="icon-button"
+                className="icon-button icon-button--wide"
                 onClick={onOpenProfile}
                 aria-label="Profile settings"
                 title="Profile settings"
               >
-                👤
+                {initials}
               </button>
               <button
                 type="button"
@@ -376,6 +490,10 @@ function App() {
   }, [session])
 
   const carMetrics = useMemo(() => buildCarMetrics(cars, refills), [cars, refills])
+  const totalSpend = useMemo(
+    () => Object.values(carMetrics).reduce((sum, m) => sum + m.totalSpent, 0),
+    [carMetrics],
+  )
   const selectedCar = cars.find((car) => car.id === selectedCarId) ?? null
   const selectedCarStats = selectedCar ? carMetrics[selectedCar.id] : null
   const selectedCarHistory = selectedCarStats
@@ -387,6 +505,11 @@ function App() {
   const latestKnownEconomy =
     selectedCarStats?.lastEconomy ??
     Object.values(carMetrics).find((metric) => metric.lastEconomy !== null)?.lastEconomy ??
+    null
+
+  const heroEconomy =
+    selectedCarStats?.averageEconomy ??
+    Object.values(carMetrics).find((m) => m.averageEconomy !== null)?.averageEconomy ??
     null
 
   const handleAuthSubmit = async (event) => {
@@ -704,14 +827,9 @@ function App() {
       <>
         <AppNav title={appTitle} darkMode={darkMode} onToggleDark={toggleDark} />
         <main className="app-shell">
-          <section className="card hero-card">
-            <div className="hero-inner">
-              <div className="hero-text">
-                <span className="eyebrow">{appTitle}</span>
-                <h1>Loading…</h1>
-              </div>
-            </div>
-          </section>
+          <div className="loading-cluster">
+            <span className="loading-label">Loading garage…</span>
+          </div>
         </main>
       </>
     )
@@ -729,32 +847,36 @@ function App() {
         onOpenProfile={() => setShowProfile(true)}
       />
       <main className="app-shell">
-      <section className="card hero-card">
-        <div className="hero-inner">
-          <div className="hero-text">
-            <span className="eyebrow">{appTitle}</span>
-            <h1>Your fuel. Your data.</h1>
-            <p className="hero-copy">
-              Track refills, monitor economy, and compare cars — all in one place.
-            </p>
+      <section className="primary-cluster">
+        <div className="primary-readout">
+          <span className="primary-readout-label">Average consumption</span>
+          <div className="primary-value-row">
+            <span className={`primary-value tabular-nums${heroEconomy === null ? ' primary-value--dim' : ''}`}>
+              {heroEconomy !== null
+                ? <TumblingNumber key={formatNumber(heroEconomy, 1)} value={formatNumber(heroEconomy, 1)} />
+                : '--'
+              }
+            </span>
+            <span className="primary-unit">L/100km</span>
           </div>
-          <div className="hero-stats">
-            <article>
-              <strong>{cars.length}</strong>
-              <span>Cars</span>
-            </article>
-            <article>
-              <strong>{refills.length}</strong>
-              <span>Refills</span>
-            </article>
-            <article>
-              <strong>
-                {latestKnownEconomy !== null
-                  ? `${formatNumber(latestKnownEconomy)}`
-                  : '--'}
-              </strong>
-              <span>L / 100 km</span>
-            </article>
+          {heroEconomy !== null && (
+            <EconomyGauge value={heroEconomy} size="lg" showLabel={false} />
+          )}
+        </div>
+        <div className="stat-pods">
+          <div className="stat-pod">
+            <span className="stat-value tabular-nums">{cars.length}</span>
+            <span className="stat-label">Vehicles</span>
+          </div>
+          <div className="stat-pod">
+            <span className="stat-value tabular-nums">{refills.length}</span>
+            <span className="stat-label">Fills</span>
+          </div>
+          <div className="stat-pod">
+            <span className="stat-value tabular-nums">
+              {formatCurrency(totalSpend)}
+            </span>
+            <span className="stat-label">Spent</span>
           </div>
         </div>
       </section>
@@ -790,12 +912,8 @@ function App() {
         </section>
       ) : !session ? (
         <section className="card auth-card">
-          <div className="section-heading">
-            <div>
-              <h2>{authMode === 'signIn' ? 'Sign in' : 'Create account'}</h2>
-              <p>Use email and password auth from Supabase.</p>
-            </div>
-            <div className="toggle-group" role="tablist" aria-label="Authentication mode">
+          <div className="auth-header">
+            <div className="auth-tabs" role="tablist" aria-label="Authentication mode">
               <button
                 type="button"
                 className={authMode === 'signIn' ? 'toggle active' : 'toggle'}
@@ -810,6 +928,10 @@ function App() {
               >
                 Register
               </button>
+            </div>
+            <div>
+              <h2>{authMode === 'signIn' ? 'Sign in' : 'Create account'}</h2>
+              <p>Access your garage with email and password.</p>
             </div>
           </div>
 
@@ -857,21 +979,21 @@ function App() {
           <section className="card">
             <div className="section-heading">
               <div>
-                <h2>Your garage</h2>
-                <p>Select a car to view its history.</p>
+                <h2>Garage</h2>
+                <p>Select a vehicle to view its history.</p>
               </div>
               <button
                 type="button"
                 className="primary-button add-btn"
                 onClick={() => setShowAddCar(true)}
               >
-                + Add car
+                + Register vehicle
               </button>
             </div>
 
             {cars.length === 0 ? (
               <p className="empty-state">
-                Add your first car with the button above, then log refills to track economy.
+                No vehicles registered. Register your first vehicle to begin tracking.
               </p>
             ) : (
               <div className="car-grid">
@@ -893,7 +1015,7 @@ function App() {
                           <button
                             type="button"
                             className="card-action-btn"
-                            title="Edit car"
+                            title="Modify vehicle"
                             onClick={() => {
                               setCarForm({
                                 name: car.name,
@@ -904,25 +1026,34 @@ function App() {
                               })
                               setEditCar(car)
                             }}
-                          >✏️</button>
+                          ><IconEdit /></button>
                           <button
                             type="button"
                             className="card-action-btn card-action-btn--danger"
-                            title="Delete car"
+                            title="Remove vehicle"
                             onClick={() => handleDeleteCar(car)}
-                          >🗑️</button>
+                          ><IconDelete /></button>
                         </div>
                       </div>
                       <span className="car-meta">
                         {[car.make, car.model].filter(Boolean).join(' ')}
                         {car.fuel_type ? ` · ${car.fuel_type}` : ''}
                       </span>
-                      <span className="car-stat">
-                        Avg: {formatNumber(metrics?.averageEconomy)} l/100 km
-                      </span>
-                      <span className="car-stat">
-                        Spent: {formatCurrency(metrics?.totalSpent)}
-                      </span>
+                      {car.tank_capacity_liters && metrics?.latestRefill ? (
+                        <div className="tank-bar" title={`Est. tank level`}>
+                          <div
+                            className="tank-fill"
+                            style={{
+                              width: `${Math.min(100, (Number(metrics.latestRefill.fuel_amount_liters) / car.tank_capacity_liters) * 100)}%`,
+                            }}
+                          />
+                        </div>
+                      ) : null}
+                      {metrics?.averageEconomy !== null && metrics?.averageEconomy !== undefined ? (
+                        <EconomyGauge value={metrics.averageEconomy} size="sm" showLabel={true} />
+                      ) : (
+                        <span className="car-stat">No fills logged</span>
+                      )}
                     </div>
                   )
                 })}
@@ -934,7 +1065,7 @@ function App() {
             <div className="section-heading">
               <div>
                 <h2>{selectedCar ? selectedCar.name : 'History'}</h2>
-                <p>Full-to-full cycles show calculated fuel economy.</p>
+                <p>Full-to-full cycles show calculated consumption.</p>
               </div>
               {cars.length > 0 && (
                 <button
@@ -942,42 +1073,50 @@ function App() {
                   className="primary-button add-btn"
                   onClick={() => setShowAddRefill(true)}
                 >
-                  + Add refill
+                  + Log fill
                 </button>
               )}
             </div>
 
             {selectedCar ? (
               <>
-                <div className="hero-stats compact">
-                  <article>
-                    <strong>{formatNumber(selectedCarStats?.averageEconomy)}</strong>
-                    <span>Average l/100 km</span>
-                  </article>
-                  <article>
-                    <strong>{formatNumber(selectedCarStats?.lastEconomy)}</strong>
-                    <span>Latest l/100 km</span>
-                  </article>
-                  <article>
-                    <strong>{formatCurrency(selectedCarStats?.totalSpent)}</strong>
-                    <span>Total fuel spend</span>
-                  </article>
+                <div className="car-stats-row">
+                  <div className="car-stat-pod">
+                    <span className="car-stat-value tabular-nums">
+                      {formatNumber(selectedCarStats?.averageEconomy, 1)}
+                    </span>
+                    <span className="car-stat-label">Avg L/100km</span>
+                  </div>
+                  <div className="car-stat-pod">
+                    <span className="car-stat-value tabular-nums">
+                      {formatNumber(selectedCarStats?.lastEconomy, 1)}
+                    </span>
+                    <span className="car-stat-label">Last cycle</span>
+                  </div>
+                  <div className="car-stat-pod">
+                    <span className="car-stat-value tabular-nums">
+                      {formatCurrency(selectedCarStats?.totalSpent)}
+                    </span>
+                    <span className="car-stat-label">Total spend</span>
+                  </div>
                 </div>
 
                 {selectedCarHistory.length === 0 ? (
-                  <p className="empty-state">No refills saved for this car yet.</p>
+                  <p className="empty-state">No fills logged for this vehicle.</p>
                 ) : (
                   <div className="history-list">
                     {selectedCarHistory.map((refill) => (
                       <article key={refill.id} className="history-item">
                         <div className="history-topline">
-                          <strong>{formatNumber(refill.odometer_km, 1)} km</strong>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                            <span>{formatDate(refill.filled_at)}</span>
+                          <span className="history-odometer tabular-nums">
+                            {formatNumber(refill.odometer_km, 1)} km
+                          </span>
+                          <div className="history-topline-right">
+                            <span className="history-date">{formatDate(refill.filled_at)}</span>
                             <button
                               type="button"
                               className="card-action-btn"
-                              title="Edit refill"
+                              title="Modify fill"
                               onClick={() => {
                                 const d = new Date(refill.filled_at)
                                 const local = new Date(d - d.getTimezoneOffset() * 60000)
@@ -992,32 +1131,48 @@ function App() {
                                 })
                                 setEditRefill(refill)
                               }}
-                            >✏️</button>
+                            ><IconEdit /></button>
                             <button
                               type="button"
                               className="card-action-btn card-action-btn--danger"
-                              title="Delete refill"
+                              title="Remove fill"
                               onClick={() => handleDeleteRefill(refill)}
-                            >🗑️</button>
+                            ><IconDelete /></button>
                           </div>
                         </div>
                         <div className="history-grid">
-                          <span>{formatNumber(refill.fuel_amount_liters)} L</span>
-                          <span>Price: {formatCurrency(refill.fuel_price)}</span>
-                          <span>Cost: {formatCurrency(refill.totalCost)}</span>
-                          <span>{refill.fill_to_top ? 'Full tank' : 'Partial tank'}</span>
+                          <div className="history-data-cell">
+                            <span className="history-cell-label">Amount</span>
+                            {formatNumber(refill.fuel_amount_liters)} L
+                          </div>
+                          <div className="history-data-cell">
+                            <span className="history-cell-label">Price/L</span>
+                            {formatCurrency(refill.fuel_price)}
+                          </div>
+                          <div className="history-data-cell">
+                            <span className="history-cell-label">Total</span>
+                            {formatCurrency(refill.totalCost)}
+                          </div>
+                          <div className="history-data-cell">
+                            <span className="history-cell-label">Type</span>
+                            <span className={`fill-badge ${refill.fill_to_top ? 'fill-badge--full' : 'fill-badge--partial'}`}>
+                              {refill.fill_to_top ? 'FULL' : 'PARTIAL'}
+                            </span>
+                          </div>
                         </div>
-                        <div className="economy-badge-row">
-                          <span className="economy-badge">
-                            {refill.economyLPer100Km !== null
-                              ? `${formatNumber(refill.economyLPer100Km)} l/100 km`
-                              : 'Economy pending next full refill'}
-                          </span>
-                          {refill.distanceKm !== null ? (
-                            <span className="muted">
+                        <div className="history-economy-row">
+                          {refill.economyLPer100Km !== null ? (
+                            <EconomyGauge value={refill.economyLPer100Km} size="md" showLabel={true} />
+                          ) : (
+                            <span className="economy-badge economy-badge--pending">
+                              Pending next full fill
+                            </span>
+                          )}
+                          {refill.distanceKm !== null && (
+                            <span className="history-date tabular-nums">
                               {formatNumber(refill.distanceKm, 1)} km cycle
                             </span>
-                          ) : null}
+                          )}
                         </div>
                       </article>
                     ))}
@@ -1025,7 +1180,7 @@ function App() {
                 )}
               </>
             ) : (
-              <p className="empty-state">Select a car above to see its refill history.</p>
+              <p className="empty-state">Select a vehicle above to see its fill history.</p>
             )}
           </section>
         </>
@@ -1033,7 +1188,7 @@ function App() {
     </main>
 
     {showAddCar && (
-      <Modal title="Add car" onClose={() => setShowAddCar(false)}>
+      <Modal title="Register vehicle" onClose={() => setShowAddCar(false)}>
         <form className="stack" onSubmit={handleAddCar}>
           <label className="field">
             <span>Car name</span>
@@ -1108,14 +1263,14 @@ function App() {
           </div>
 
           <button className="primary-button" type="submit" disabled={Boolean(busyAction)}>
-            Save car
+            Register vehicle
           </button>
         </form>
       </Modal>
     )}
 
     {showAddRefill && (
-      <Modal title="Add refill" onClose={() => setShowAddRefill(false)}>
+      <Modal title="Log fill" onClose={() => setShowAddRefill(false)}>
         <form className="stack" onSubmit={handleAddRefill}>
           <label className="field">
             <span>Car</span>
@@ -1216,7 +1371,7 @@ function App() {
                 }))
               }
             />
-            <span>I filled the tank to the top</span>
+            <span>Filled to top (full fill)</span>
           </label>
 
           <button
@@ -1224,7 +1379,7 @@ function App() {
             type="submit"
             disabled={Boolean(busyAction)}
           >
-            Save refill
+            Log fill
           </button>
         </form>
       </Modal>
@@ -1303,7 +1458,7 @@ function App() {
           <label className="checkbox-field">
             <input type="checkbox" checked={refillForm.fillToTop}
               onChange={(e) => setRefillForm((f) => ({ ...f, fillToTop: e.target.checked }))} />
-            <span>I filled the tank to the top</span>
+            <span>Filled to top (full fill)</span>
           </label>
           <button className="primary-button" type="submit" disabled={Boolean(busyAction)}>
             Save changes
@@ -1313,12 +1468,11 @@ function App() {
     )}
 
     {showProfile && (
-      <Modal title="Profile settings" onClose={() => setShowProfile(false)}>
+      <Modal title="Profile" onClose={() => setShowProfile(false)}>
         <form className="stack" onSubmit={handleSaveProfile}>
           <label className="field">
             <span>Email</span>
-            <input type="email" value={session?.user?.email ?? ''} disabled
-              style={{ opacity: 0.6, cursor: 'not-allowed' }} />
+            <input type="email" value={session?.user?.email ?? ''} disabled />
           </label>
           <label className="field">
             <span>Display name</span>
