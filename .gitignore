@@ -28,3 +28,16 @@ dist-ssr
 .env.*
 !.env.example
 .vercel
+
+# Agent/editor generated metadata
+.agents/
+.clinerules/
+.cursor/
+.opencode/
+.windsurf/
+AGENTS.md
+skills-lock.json
+config.yaml
+
+# Local Copilot overrides
+.github/copilot-instructions.md
