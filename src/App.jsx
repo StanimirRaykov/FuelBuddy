@@ -494,6 +494,18 @@ function App() {
     () => Object.values(carMetrics).reduce((sum, m) => sum + m.totalSpent, 0),
     [carMetrics],
   )
+  const totalLitres = useMemo(
+    () => refills.reduce((sum, r) => sum + Number(r.fuel_amount_liters), 0),
+    [refills],
+  )
+  const avgFuelPrice = useMemo(() => {
+    if (totalLitres === 0) return null
+    const weightedSum = refills.reduce(
+      (sum, r) => sum + Number(r.fuel_price) * Number(r.fuel_amount_liters),
+      0,
+    )
+    return weightedSum / totalLitres
+  }, [refills, totalLitres])
   const selectedCar = cars.find((car) => car.id === selectedCarId) ?? null
   const selectedCarStats = selectedCar ? carMetrics[selectedCar.id] : null
   const selectedCarHistory = selectedCarStats
@@ -877,6 +889,18 @@ function App() {
               {formatCurrency(totalSpend)}
             </span>
             <span className="stat-label">Spent</span>
+          </div>
+          <div className="stat-pod">
+            <span className="stat-value tabular-nums">
+              {refills.length > 0 ? `${formatNumber(totalLitres)} L` : '--'}
+            </span>
+            <span className="stat-label">Total Litres</span>
+          </div>
+          <div className="stat-pod">
+            <span className="stat-value tabular-nums">
+              {formatCurrency(avgFuelPrice)}
+            </span>
+            <span className="stat-label">Avg Price/L</span>
           </div>
         </div>
       </section>

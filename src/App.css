@@ -172,9 +172,13 @@
 
 /* ── Stat pods ───────────────────────────────────────── */
 .stat-pods {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  display: flex;
+  flex-wrap: wrap;
   gap: var(--space-3);
+}
+
+.stat-pod {
+  flex: 1 1 calc(33.333% - var(--space-3));
 }
 
 .stat-pod {
@@ -1047,7 +1051,7 @@
   .modal-header { padding: var(--space-5) var(--space-6) var(--space-4); }
 }
 @media (max-width: 600px) {
-  .stat-pods   { grid-template-columns: repeat(3, 1fr); gap: var(--space-2); }
+  .stat-pods   { gap: var(--space-2); }
   .stat-value  { font-size: var(--text-lg); }
   .field-row   { flex-direction: column; gap: var(--space-4); }
   .section-heading { flex-wrap: wrap; }
@@ -1062,7 +1066,7 @@
 }
 
 @media (max-width: 400px) {
-  .stat-pods { grid-template-columns: repeat(3, 1fr); }
+  .stat-pods { gap: var(--space-2); }
   .stat-value { font-size: var(--text-base); }
   .primary-value { font-size: var(--text-3xl); }
   .history-grid { grid-template-columns: repeat(2, 1fr); }
